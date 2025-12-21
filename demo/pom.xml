@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.0.0</version>
+		<version>4.0.1</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.spring12</groupId>
@@ -30,7 +30,8 @@
 		<java.version>25</java.version>
 	</properties>
 	<dependencies>
-		<dependency>
+		<!--~~(tools.jackson:jackson-base:3.0.3 failed. Unable to download POM: tools.jackson:jackson-base:3.0.3. Tried repositories:
+https://repo.maven.apache.org/maven2: Connect timed out)~~>--><dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-restclient</artifactId>
 		</dependency>
