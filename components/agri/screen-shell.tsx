@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 16,
-    gap: 12,
+    gap: 11,
   },
   hero: {
     paddingTop: 4,
@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
-    fontSize: 29,
+    fontSize: 27,
     fontWeight: '700',
     color: ui.heading,
     letterSpacing: -0.4,

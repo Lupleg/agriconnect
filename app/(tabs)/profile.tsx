@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ScreenShell } from '@/components/agri/screen-shell';
+import { ui } from '@/components/agri/theme';
 import { ActionButton, Field, SectionCard } from '@/components/agri/ui';
 import { useAgri } from '@/context/agri-context';
 
@@ -20,19 +21,26 @@ export default function ProfileScreen() {
   return (
     <ScreenShell
       title="Farmer Profile"
-      subtitle="Complete onboarding with farm details and maintain harvest dates with quantities.">
+      subtitle="Set onboarding details and maintain harvest plans with dates and quantities.">
       <SectionCard>
-        <Text style={styles.sectionTitle}>Onboarding</Text>
-        <Text style={styles.caption}>
-          Status: {farmerProfile.onboardingComplete ? 'Complete' : 'Incomplete'}
-        </Text>
+        <View style={styles.statusRow}>
+          <Text style={styles.sectionTitle}>Onboarding</Text>
+          <View
+            style={[
+              styles.statusBadge,
+              farmerProfile.onboardingComplete ? styles.statusComplete : styles.statusPending,
+            ]}>
+            <Text
+              style={[
+                styles.statusText,
+                farmerProfile.onboardingComplete ? styles.statusTextComplete : styles.statusTextPending,
+              ]}>
+              {farmerProfile.onboardingComplete ? 'Complete' : 'Incomplete'}
+            </Text>
+          </View>
+        </View>
 
-        <Field
-          label="Farmer full name"
-          value={fullName}
-          onChangeText={setFullName}
-          placeholder="Farmer name"
-        />
+        <Field label="Farmer name" value={fullName} onChangeText={setFullName} placeholder="Farmer name" />
         <Field
           label="Phone number"
           value={phoneNumber}
@@ -53,7 +61,7 @@ export default function ProfileScreen() {
         />
 
         <ActionButton
-          label="Save onboarding profile"
+          label="Save profile"
           onPress={() => {
             const cropTypes = cropTypesRaw
               .split(',')
@@ -73,24 +81,30 @@ export default function ProfileScreen() {
 
       <SectionCard>
         <Text style={styles.sectionTitle}>Harvest plans</Text>
+        <View style={styles.splitRow}>
+          <View style={styles.splitCol}>
+            <Field
+              label="Crop"
+              value={harvestCropName}
+              onChangeText={setHarvestCropName}
+              placeholder="Onions"
+            />
+          </View>
+          <View style={styles.splitCol}>
+            <Field
+              label="Quantity (kg)"
+              value={harvestQuantity}
+              onChangeText={setHarvestQuantity}
+              keyboardType="numeric"
+              placeholder="500"
+            />
+          </View>
+        </View>
         <Field
-          label="Crop"
-          value={harvestCropName}
-          onChangeText={setHarvestCropName}
-          placeholder="e.g. Onions"
-        />
-        <Field
-          label="Harvest date (YYYY-MM-DD)"
+          label="Harvest date"
           value={harvestDate}
           onChangeText={setHarvestDate}
           placeholder="2026-03-28"
-        />
-        <Field
-          label="Estimated quantity (kg)"
-          value={harvestQuantity}
-          onChangeText={setHarvestQuantity}
-          keyboardType="numeric"
-          placeholder="500"
         />
 
         <ActionButton
@@ -124,7 +138,7 @@ export default function ProfileScreen() {
               <View style={styles.planDetails}>
                 <Text style={styles.planTitle}>{plan.cropName}</Text>
                 <Text style={styles.planMeta}>
-                  {plan.harvestDate} | {plan.quantityKg} kg
+                  {plan.harvestDate} · {plan.quantityKg} kg
                 </Text>
               </View>
               <Pressable onPress={() => removeHarvestPlan(plan.id)} style={styles.removeButton}>
@@ -142,13 +156,49 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#183121',
+    color: ui.heading,
   },
   caption: {
-    fontSize: 13,
-    color: '#607565',
+    fontSize: 12,
+    color: ui.textMuted,
+  },
+  splitRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  splitCol: {
+    flex: 1,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  statusBadge: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  statusComplete: {
+    backgroundColor: '#eaf4ed',
+    borderColor: '#cae1d0',
+  },
+  statusPending: {
+    backgroundColor: '#fff4e6',
+    borderColor: '#f1dfc1',
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  statusTextComplete: {
+    color: '#2f6a47',
+  },
+  statusTextPending: {
+    color: '#8e6832',
   },
   planRow: {
     flexDirection: 'row',
@@ -156,33 +206,33 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
     borderWidth: 1,
-    borderColor: '#dce7d8',
-    borderRadius: 10,
+    borderColor: ui.border,
+    borderRadius: 11,
     padding: 10,
-    backgroundColor: '#f7fbf6',
+    backgroundColor: ui.surfaceMuted,
   },
   planDetails: {
-    gap: 4,
+    gap: 3,
     flex: 1,
   },
   planTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#1c3624',
+    color: ui.heading,
   },
   planMeta: {
     fontSize: 12,
-    color: '#5d735f',
+    color: ui.textMuted,
   },
   removeButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingVertical: 5,
+    paddingHorizontal: 9,
     borderRadius: 8,
-    backgroundColor: '#ffe8e4',
+    backgroundColor: ui.dangerSoft,
   },
   removeButtonText: {
-    color: '#9a3c2d',
+    color: ui.danger,
     fontWeight: '700',
-    fontSize: 12,
+    fontSize: 11,
   },
 });
