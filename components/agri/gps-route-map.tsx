@@ -6,6 +6,7 @@ import type { GpsCheckpoint } from '@/types/agri';
 
 const mapsModule = (() => {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require('react-native-maps');
   } catch {
     return null;
@@ -33,7 +34,7 @@ type Point = GpsCheckpoint & {
   y: number;
 };
 
-const buildRegion = (coordinates: Array<{ latitude: number; longitude: number }>) => {
+const buildRegion = (coordinates: { latitude: number; longitude: number }[]) => {
   if (!coordinates.length) {
     return {
       latitude: -1.2864,
