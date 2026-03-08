@@ -17,6 +17,10 @@ export default function OrdersScreen() {
     [listings],
   );
 
+  const [showOrderForm, setShowOrderForm] = useState(false);
+  const [showAdvancedOrderFields, setShowAdvancedOrderFields] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+
   const [selectedListingId, setSelectedListingId] = useState<string>(orderableListings[0]?.id ?? '');
   const [buyerName, setBuyerName] = useState('City Traders');
   const [buyerContact, setBuyerContact] = useState('+254 711 000 111');
@@ -80,45 +84,52 @@ export default function OrdersScreen() {
     });
 
     setQuantityKg('');
+    setShowOrderForm(false);
+    setShowAdvancedOrderFields(false);
   };
 
   return (
     <ScreenShell
       title="Orders"
-      subtitle="Create buyer orders, move status forward, and negotiate by order thread.">
+      subtitle="Streamlined view: expand forms only when you need to create or negotiate.">
       <SectionCard>
-        <Text style={styles.sectionTitle}>New order</Text>
-
-        <Text style={styles.fieldLabel}>Select listing</Text>
-        <View style={styles.optionRow}>
-          {orderableListings.map((listing) => (
-            <Pressable
-              key={listing.id}
-              onPress={() => setSelectedListingId(listing.id)}
-              style={[
-                styles.optionPill,
-                selectedListingId === listing.id ? styles.optionPillActive : null,
-              ]}>
-              <Text
-                style={[
-                  styles.optionPillText,
-                  selectedListingId === listing.id ? styles.optionPillTextActive : null,
-                ]}>
-                {listing.cropName} ({listing.quantityKg.toFixed(0)} kg)
-              </Text>
-            </Pressable>
-          ))}
+        <View style={styles.headerRow}>
+          <Text style={styles.sectionTitle}>New order</Text>
+          <Pressable style={styles.ghostButton} onPress={() => setShowOrderForm((current) => !current)}>
+            <Text style={styles.ghostButtonText}>{showOrderForm ? 'Close' : 'Create'}</Text>
+          </Pressable>
         </View>
 
-        <Field label="Buyer name" value={buyerName} onChangeText={setBuyerName} placeholder="Buyer" />
-        <Field
-          label="Buyer contact"
-          value={buyerContact}
-          onChangeText={setBuyerContact}
-          placeholder="+254 ..."
-        />
-        <View style={styles.splitRow}>
-          <View style={styles.splitCol}>
+        {showOrderForm ? (
+          <>
+            <Text style={styles.fieldLabel}>Select listing</Text>
+            <View style={styles.optionRow}>
+              {orderableListings.map((listing) => (
+                <Pressable
+                  key={listing.id}
+                  onPress={() => setSelectedListingId(listing.id)}
+                  style={[
+                    styles.optionPill,
+                    selectedListingId === listing.id ? styles.optionPillActive : null,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.optionPillText,
+                      selectedListingId === listing.id ? styles.optionPillTextActive : null,
+                    ]}>
+                    {listing.cropName} ({listing.quantityKg.toFixed(0)} kg)
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <Field label="Buyer name" value={buyerName} onChangeText={setBuyerName} placeholder="Buyer" />
+            <Field
+              label="Buyer contact"
+              value={buyerContact}
+              onChangeText={setBuyerContact}
+              placeholder="+254 ..."
+            />
             <Field
               label="Quantity (kg)"
               value={quantityKg}
@@ -126,110 +137,140 @@ export default function OrdersScreen() {
               keyboardType="numeric"
               placeholder="100"
             />
-          </View>
-          <View style={styles.splitCol}>
-            <Field
-              label="Pickup"
-              value={pickupLocation}
-              onChangeText={setPickupLocation}
-              placeholder="Farm location"
-            />
-          </View>
-        </View>
-        <Field
-          label="Dropoff"
-          value={dropoffLocation}
-          onChangeText={setDropoffLocation}
-          placeholder="Buyer location"
-        />
 
-        <ActionButton label="Place order" onPress={submitOrder} disabled={!orderableListings.length} />
+            <Pressable
+              style={styles.inlineToggle}
+              onPress={() => setShowAdvancedOrderFields((current) => !current)}>
+              <Text style={styles.inlineToggleText}>
+                {showAdvancedOrderFields ? 'Hide route fields' : 'Add route fields'}
+              </Text>
+            </Pressable>
+
+            {showAdvancedOrderFields ? (
+              <>
+                <Field
+                  label="Pickup"
+                  value={pickupLocation}
+                  onChangeText={setPickupLocation}
+                  placeholder="Farm location"
+                />
+                <Field
+                  label="Dropoff"
+                  value={dropoffLocation}
+                  onChangeText={setDropoffLocation}
+                  placeholder="Buyer location"
+                />
+              </>
+            ) : null}
+
+            <ActionButton label="Place order" onPress={submitOrder} disabled={!orderableListings.length} />
+          </>
+        ) : (
+          <Text style={styles.helperText}>Use Create to place a new buyer order.</Text>
+        )}
       </SectionCard>
 
       <SectionCard>
         <Text style={styles.sectionTitle}>Orders ({orders.length})</Text>
-        {orders.map((order) => (
-          <Pressable
-            key={order.id}
-            onPress={() => setSelectedOrderId(order.id)}
-            style={[
-              styles.orderItem,
-              selectedOrderId === order.id ? styles.orderItemSelected : null,
-            ]}>
-            <View style={styles.rowSpread}>
-              <Text style={styles.orderTitle}>
-                {order.cropName} · {order.quantityKg} kg
-              </Text>
-              <OrderStatusPill status={order.status} />
-            </View>
-            <Text style={styles.orderMeta}>Buyer: {order.buyerName}</Text>
-            <Text style={styles.orderMeta}>
-              {order.pickupLocation} {'->'} {order.dropoffLocation}
-            </Text>
-            <Text style={styles.orderMeta}>Total: ${order.totalPrice.toFixed(2)}</Text>
-            <ActionButton
-              label="Advance status"
-              onPress={() => advanceOrderStatus(order.id)}
-              variant="secondary"
-            />
-          </Pressable>
-        ))}
+        {orders.map((order) => {
+          const selected = selectedOrderId === order.id;
+
+          return (
+            <Pressable
+              key={order.id}
+              onPress={() => setSelectedOrderId(order.id)}
+              style={[styles.orderItem, selected ? styles.orderItemSelected : null]}>
+              <View style={styles.rowSpread}>
+                <Text style={styles.orderTitle}>
+                  {order.cropName} · {order.quantityKg} kg
+                </Text>
+                <OrderStatusPill status={order.status} />
+              </View>
+
+              {selected ? (
+                <>
+                  <Text style={styles.orderMeta}>Buyer: {order.buyerName}</Text>
+                  <Text style={styles.orderMeta}>
+                    {order.pickupLocation} {'->'} {order.dropoffLocation}
+                  </Text>
+                  <Text style={styles.orderMeta}>Total: ${order.totalPrice.toFixed(2)}</Text>
+                  <ActionButton
+                    label="Advance status"
+                    onPress={() => advanceOrderStatus(order.id)}
+                    variant="secondary"
+                  />
+                </>
+              ) : (
+                <Text style={styles.helperText}>Tap to expand order actions</Text>
+              )}
+            </Pressable>
+          );
+        })}
       </SectionCard>
 
       <SectionCard>
-        <Text style={styles.sectionTitle}>Negotiation chat</Text>
-        <Text style={styles.caption}>Select an order above to open its chat thread.</Text>
-
-        <Text style={styles.fieldLabel}>Sender</Text>
-        <View style={styles.optionRow}>
-          {chatSenders.map((sender) => (
-            <Pressable
-              key={sender}
-              onPress={() => setChatSender(sender)}
-              style={[
-                styles.optionPill,
-                chatSender === sender ? styles.optionPillActive : null,
-              ]}>
-              <Text
-                style={[
-                  styles.optionPillText,
-                  chatSender === sender ? styles.optionPillTextActive : null,
-                ]}>
-                {sender}
-              </Text>
-            </Pressable>
-          ))}
+        <View style={styles.headerRow}>
+          <Text style={styles.sectionTitle}>Negotiation chat</Text>
+          <Pressable style={styles.ghostButton} onPress={() => setShowChat((current) => !current)}>
+            <Text style={styles.ghostButtonText}>{showChat ? 'Close' : 'Open'}</Text>
+          </Pressable>
         </View>
 
-        <Field
-          label="Message"
-          value={chatBody}
-          onChangeText={setChatBody}
-          placeholder="Delivery timing, quality checks, or quantity changes"
-          multiline
-          numberOfLines={3}
-          style={styles.chatInput}
-        />
+        {showChat ? (
+          <>
+            <Text style={styles.caption}>Selected order thread only.</Text>
 
-        <ActionButton
-          label="Send message"
-          onPress={() => {
-            if (!selectedOrderId) return;
-            addChatMessage(selectedOrderId, chatSender, chatBody);
-            setChatBody('');
-          }}
-          disabled={!selectedOrderId}
-        />
-
-        {selectedOrderMessages.length ? (
-          selectedOrderMessages.map((message) => (
-            <View key={message.id} style={styles.messageItem}>
-              <Text style={styles.messageSender}>{message.sender}</Text>
-              <Text style={styles.messageBody}>{message.body}</Text>
+            <Text style={styles.fieldLabel}>Sender</Text>
+            <View style={styles.optionRow}>
+              {chatSenders.map((sender) => (
+                <Pressable
+                  key={sender}
+                  onPress={() => setChatSender(sender)}
+                  style={[styles.optionPill, chatSender === sender ? styles.optionPillActive : null]}>
+                  <Text
+                    style={[
+                      styles.optionPillText,
+                      chatSender === sender ? styles.optionPillTextActive : null,
+                    ]}>
+                    {sender}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
-          ))
+
+            <Field
+              label="Message"
+              value={chatBody}
+              onChangeText={setChatBody}
+              placeholder="Delivery timing, quality checks, or quantity changes"
+              multiline
+              numberOfLines={3}
+              style={styles.chatInput}
+            />
+
+            <ActionButton
+              label="Send message"
+              onPress={() => {
+                if (!selectedOrderId) return;
+                addChatMessage(selectedOrderId, chatSender, chatBody);
+                setChatBody('');
+              }}
+              disabled={!selectedOrderId}
+            />
+
+            {selectedOrderMessages.length ? (
+              selectedOrderMessages.slice(0, 4).map((message) => (
+                <View key={message.id} style={styles.messageItem}>
+                  <Text style={styles.messageSender}>{message.sender}</Text>
+                  <Text style={styles.messageBody}>{message.body}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.caption}>No messages yet.</Text>
+            )}
+          </>
         ) : (
-          <Text style={styles.caption}>No messages yet.</Text>
+          <Text style={styles.helperText}>Open chat only when needed to reduce screen noise.</Text>
         )}
       </SectionCard>
     </ScreenShell>
@@ -242,7 +283,27 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: ui.heading,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  ghostButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: ui.primarySoft,
+    borderRadius: 999,
+  },
+  ghostButtonText: {
+    fontSize: 11,
+    color: ui.primary,
+    fontWeight: '700',
+  },
   caption: {
+    fontSize: 12,
+    color: ui.textMuted,
+  },
+  helperText: {
     fontSize: 12,
     color: ui.textMuted,
   },
@@ -250,13 +311,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: ui.textMuted,
-  },
-  splitRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  splitCol: {
-    flex: 1,
   },
   optionRow: {
     flexDirection: 'row',
@@ -282,6 +336,20 @@ const styles = StyleSheet.create({
   },
   optionPillTextActive: {
     color: '#ffffff',
+  },
+  inlineToggle: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#f1f6ef',
+    borderWidth: 1,
+    borderColor: '#dce7d8',
+  },
+  inlineToggleText: {
+    fontSize: 11,
+    color: '#4e6554',
+    fontWeight: '700',
   },
   orderItem: {
     gap: 5,

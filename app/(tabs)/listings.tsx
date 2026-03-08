@@ -12,6 +12,9 @@ const listingStatuses: ListingStatus[] = ['available', 'reserved', 'sold'];
 export default function ListingsScreen() {
   const { listings, createListing, updateListingStatus } = useAgri();
 
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [expandedListingId, setExpandedListingId] = useState<string | null>(null);
+
   const [cropName, setCropName] = useState('');
   const [quantityKg, setQuantityKg] = useState('');
   const [pricePerKg, setPricePerKg] = useState('');
@@ -47,49 +50,62 @@ export default function ListingsScreen() {
     setPricePerKg('');
     setHarvestDate('2026-03-18');
     setPhotoUrl('');
+    setShowCreateForm(false);
   };
 
   return (
     <ScreenShell
       title="Crop Listings"
-      subtitle="Publish available crops and keep stock status updated for buyers.">
+      subtitle="Keep inventory clean and only open editing controls when needed.">
       <SectionCard>
-        <Text style={styles.sectionTitle}>Post new crop</Text>
-        <Field label="Crop name" value={cropName} onChangeText={setCropName} placeholder="Tomatoes" />
-        <View style={styles.splitRow}>
-          <View style={styles.splitCol}>
-            <Field
-              label="Quantity (kg)"
-              value={quantityKg}
-              onChangeText={setQuantityKg}
-              keyboardType="numeric"
-              placeholder="850"
-            />
-          </View>
-          <View style={styles.splitCol}>
-            <Field
-              label="Price/kg (USD)"
-              value={pricePerKg}
-              onChangeText={setPricePerKg}
-              keyboardType="numeric"
-              placeholder="1.25"
-            />
-          </View>
+        <View style={styles.headerRow}>
+          <Text style={styles.sectionTitle}>Create listing</Text>
+          <Pressable style={styles.ghostButton} onPress={() => setShowCreateForm((current) => !current)}>
+            <Text style={styles.ghostButtonText}>{showCreateForm ? 'Close' : 'New listing'}</Text>
+          </Pressable>
         </View>
-        <Field
-          label="Harvest date"
-          value={harvestDate}
-          onChangeText={setHarvestDate}
-          placeholder="2026-03-25"
-        />
-        <Field
-          label="Photo URL (optional)"
-          value={photoUrl}
-          onChangeText={setPhotoUrl}
-          placeholder="https://..."
-          autoCapitalize="none"
-        />
-        <ActionButton label="Create listing" onPress={addListing} />
+
+        {showCreateForm ? (
+          <>
+            <Field label="Crop name" value={cropName} onChangeText={setCropName} placeholder="Tomatoes" />
+            <View style={styles.splitRow}>
+              <View style={styles.splitCol}>
+                <Field
+                  label="Quantity (kg)"
+                  value={quantityKg}
+                  onChangeText={setQuantityKg}
+                  keyboardType="numeric"
+                  placeholder="850"
+                />
+              </View>
+              <View style={styles.splitCol}>
+                <Field
+                  label="Price/kg (USD)"
+                  value={pricePerKg}
+                  onChangeText={setPricePerKg}
+                  keyboardType="numeric"
+                  placeholder="1.25"
+                />
+              </View>
+            </View>
+            <Field
+              label="Harvest date"
+              value={harvestDate}
+              onChangeText={setHarvestDate}
+              placeholder="2026-03-25"
+            />
+            <Field
+              label="Photo URL (optional)"
+              value={photoUrl}
+              onChangeText={setPhotoUrl}
+              placeholder="https://..."
+              autoCapitalize="none"
+            />
+            <ActionButton label="Create listing" onPress={addListing} />
+          </>
+        ) : (
+          <Text style={styles.helperText}>Use New listing to add fresh produce stock.</Text>
+        )}
       </SectionCard>
 
       <SectionCard>
@@ -98,38 +114,49 @@ export default function ListingsScreen() {
         {!listings.length ? (
           <Text style={styles.emptyText}>No listings available.</Text>
         ) : (
-          listings.map((listing) => (
-            <View key={listing.id} style={styles.listingItem}>
-              <View style={styles.rowSpread}>
-                <Text style={styles.listingTitle}>{listing.cropName}</Text>
-                <ListingStatusPill status={listing.status} />
-              </View>
+          listings.map((listing) => {
+            const expanded = expandedListingId === listing.id;
 
-              <Text style={styles.metaText}>
-                {listing.quantityKg.toFixed(0)} kg | ${listing.pricePerKg.toFixed(2)}/kg | {listing.harvestDate}
-              </Text>
+            return (
+              <Pressable
+                key={listing.id}
+                style={styles.listingItem}
+                onPress={() => setExpandedListingId((current) => (current === listing.id ? null : listing.id))}>
+                <View style={styles.rowSpread}>
+                  <Text style={styles.listingTitle}>{listing.cropName}</Text>
+                  <ListingStatusPill status={listing.status} />
+                </View>
 
-              <View style={styles.statusRow}>
-                {listingStatuses.map((status) => (
-                  <Pressable
-                    key={status}
-                    onPress={() => updateListingStatus(listing.id, status)}
-                    style={[
-                      styles.statusButton,
-                      listing.status === status ? styles.statusButtonActive : null,
-                    ]}>
-                    <Text
-                      style={[
-                        styles.statusButtonText,
-                        listing.status === status ? styles.statusButtonTextActive : null,
-                      ]}>
-                      {status}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-          ))
+                <Text style={styles.metaText}>
+                  {listing.quantityKg.toFixed(0)} kg | ${listing.pricePerKg.toFixed(2)}/kg | {listing.harvestDate}
+                </Text>
+
+                {expanded ? (
+                  <View style={styles.statusRow}>
+                    {listingStatuses.map((status) => (
+                      <Pressable
+                        key={status}
+                        onPress={() => updateListingStatus(listing.id, status)}
+                        style={[
+                          styles.statusButton,
+                          listing.status === status ? styles.statusButtonActive : null,
+                        ]}>
+                        <Text
+                          style={[
+                            styles.statusButtonText,
+                            listing.status === status ? styles.statusButtonTextActive : null,
+                          ]}>
+                          {status}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={styles.helperText}>Tap to manage status</Text>
+                )}
+              </Pressable>
+            );
+          })
         )}
       </SectionCard>
     </ScreenShell>
@@ -141,6 +168,26 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: ui.heading,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  ghostButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: ui.primarySoft,
+    borderRadius: 999,
+  },
+  ghostButtonText: {
+    fontSize: 11,
+    color: ui.primary,
+    fontWeight: '700',
+  },
+  helperText: {
+    fontSize: 12,
+    color: ui.textMuted,
   },
   splitRow: {
     flexDirection: 'row',
