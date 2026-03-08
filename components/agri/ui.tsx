@@ -1,18 +1,21 @@
 import React from 'react';
 import {
   Pressable,
+  StyleProp,
   StyleSheet,
   Text,
   TextInput,
   TextInputProps,
   View,
+  ViewStyle,
   ViewProps,
 } from 'react-native';
 
+import { ui } from '@/components/agri/theme';
 import type { ListingStatus, OrderStatus } from '@/types/agri';
 
 export function SectionCard({ children, style }: ViewProps) {
-  return <View style={[styles.card, style]}>{children}</View>;
+  return <View style={[styles.card, style as StyleProp<ViewStyle>]}>{children}</View>;
 }
 
 type FieldProps = TextInputProps & {
@@ -26,7 +29,7 @@ export function Field({ label, style, ...props }: FieldProps) {
       <TextInput
         {...props}
         style={[styles.input, style]}
-        placeholderTextColor="#92a494"
+        placeholderTextColor="#9aac9f"
         autoCorrect={false}
       />
     </View>
@@ -61,10 +64,10 @@ export function ActionButton({ label, onPress, variant = 'primary', disabled = f
 export function ListingStatusPill({ status }: { status: ListingStatus }) {
   const palette =
     status === 'available'
-      ? { bg: '#ddf3dc', fg: '#1c5f1f' }
+      ? { bg: '#ebf5ee', fg: '#2f6a47' }
       : status === 'reserved'
-        ? { bg: '#fff2d8', fg: '#8a5b08' }
-        : { bg: '#e7eaed', fg: '#4b5563' };
+        ? { bg: '#fff4e1', fg: '#90642a' }
+        : { bg: '#edf1ee', fg: '#56665d' };
 
   return (
     <View style={[styles.pill, { backgroundColor: palette.bg }]}>
@@ -76,12 +79,12 @@ export function ListingStatusPill({ status }: { status: ListingStatus }) {
 export function OrderStatusPill({ status }: { status: OrderStatus }) {
   const palette =
     status === 'pending'
-      ? { bg: '#e7f0ff', fg: '#2253a4' }
+      ? { bg: '#ecf3ff', fg: '#3d5f96' }
       : status === 'picked'
-        ? { bg: '#ede7ff', fg: '#5a3ca6' }
+        ? { bg: '#efebff', fg: '#6a549f' }
         : status === 'in transit'
-          ? { bg: '#fff3dd', fg: '#905b06' }
-          : { bg: '#ddf3dc', fg: '#1c5f1f' };
+          ? { bg: '#fff5e7', fg: '#8e6630' }
+          : { bg: '#eaf4ed', fg: '#2f6a47' };
 
   return (
     <View style={[styles.pill, { backgroundColor: palette.bg }]}>
@@ -92,42 +95,50 @@ export function OrderStatusPill({ status }: { status: OrderStatus }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    gap: 10,
+    backgroundColor: ui.surface,
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
     borderWidth: 1,
-    borderColor: '#dfe7d8',
+    borderColor: ui.border,
+    shadowColor: ui.shadow,
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 2,
   },
   fieldWrap: {
-    gap: 6,
+    gap: 7,
   },
   fieldLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#2f4636',
+    color: ui.textMuted,
+    letterSpacing: 0.2,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#c8d5c8',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: ui.border,
+    borderRadius: 12,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
     fontSize: 15,
-    color: '#152618',
-    backgroundColor: '#f9fcf5',
+    color: ui.text,
+    backgroundColor: ui.surfaceMuted,
   },
   button: {
+    minHeight: 44,
     paddingVertical: 11,
     paddingHorizontal: 14,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonPrimary: {
-    backgroundColor: '#1c7c3d',
+    backgroundColor: ui.primary,
   },
   buttonSecondary: {
-    backgroundColor: '#e9f3e9',
+    backgroundColor: ui.primarySoft,
   },
   buttonPressed: {
     opacity: 0.85,
@@ -136,23 +147,23 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   buttonPrimaryText: {
-    color: '#ffffff',
+    color: '#f8fbf8',
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 13,
   },
   buttonSecondaryText: {
-    color: '#1f5731',
+    color: ui.primary,
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 13,
   },
   pill: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
     borderRadius: 999,
   },
   pillText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     textTransform: 'capitalize',
   },

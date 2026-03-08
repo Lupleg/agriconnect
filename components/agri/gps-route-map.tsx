@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { ui } from '@/components/agri/theme';
 import type { GpsCheckpoint } from '@/types/agri';
 
 type RouteMapProps = {
@@ -63,8 +64,8 @@ export function GpsRouteMap({ checkpoints, currentCheckpointIndex }: RouteMapPro
                 {
                   left: `${point.x}%`,
                   top: `${point.y}%`,
-                  backgroundColor: reached ? '#19713a' : '#c9d5c8',
-                  borderColor: current ? '#f59e0b' : '#ffffff',
+                  backgroundColor: reached ? ui.primary : '#cbd7ce',
+                  borderColor: current ? '#d89b3f' : '#ffffff',
                 },
               ]}
             />
@@ -95,11 +96,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   map: {
-    height: 190,
-    borderRadius: 12,
+    height: 184,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#cad9cb',
-    backgroundColor: '#eef7eb',
+    borderColor: ui.border,
+    backgroundColor: '#eef4ee',
     overflow: 'hidden',
     position: 'relative',
   },
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
     right: 0,
     top: '33%',
     borderTopWidth: 1,
-    borderTopColor: '#d8e6d8',
+    borderTopColor: '#dce7de',
   },
   gridHorizontalBottom: {
     position: 'absolute',
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
     right: 0,
     top: '66%',
     borderTopWidth: 1,
-    borderTopColor: '#d8e6d8',
+    borderTopColor: '#dce7de',
   },
   gridVerticalLeft: {
     position: 'absolute',
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: '33%',
     borderLeftWidth: 1,
-    borderLeftColor: '#d8e6d8',
+    borderLeftColor: '#dce7de',
   },
   gridVerticalRight: {
     position: 'absolute',
@@ -133,52 +134,52 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: '66%',
     borderLeftWidth: 1,
-    borderLeftColor: '#d8e6d8',
+    borderLeftColor: '#dce7de',
   },
   point: {
     position: 'absolute',
-    width: 16,
-    height: 16,
-    marginLeft: -8,
-    marginTop: -8,
+    width: 14,
+    height: 14,
+    marginLeft: -7,
+    marginTop: -7,
     borderRadius: 999,
     borderWidth: 2,
   },
   legendWrap: {
-    gap: 7,
+    gap: 6,
   },
   legendRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 7,
   },
   legendDot: {
-    width: 9,
-    height: 9,
+    width: 8,
+    height: 8,
     borderRadius: 999,
   },
   legendName: {
     flex: 1,
-    fontSize: 13,
-    color: '#284230',
+    fontSize: 12,
+    color: '#314a39',
   },
   legendCoords: {
-    fontSize: 11,
-    color: '#708272',
+    fontSize: 10,
+    color: '#809082',
   },
   emptyMap: {
     minHeight: 120,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#cad9cb',
-    backgroundColor: '#f6faf4',
+    borderColor: ui.border,
+    backgroundColor: ui.surfaceMuted,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 12,
   },
   emptyText: {
-    fontSize: 13,
-    color: '#5f735f',
+    fontSize: 12,
+    color: ui.textMuted,
     textAlign: 'center',
   },
 });

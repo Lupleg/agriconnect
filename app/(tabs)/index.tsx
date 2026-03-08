@@ -1,9 +1,10 @@
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
 
-import { ScreenShell } from '@/components/agri/screen-shell';
+import { ui } from '@/components/agri/theme';
 import { ActionButton, ListingStatusPill, SectionCard } from '@/components/agri/ui';
+import { ScreenShell } from '@/components/agri/screen-shell';
 import { useAgri } from '@/context/agri-context';
 
 function fmtCurrency(value: number) {
@@ -31,54 +32,54 @@ export default function DashboardScreen() {
   return (
     <ScreenShell
       title="Farmer Dashboard"
-      subtitle="Monitor inventory, deliveries, and daily sales activity from one place.">
+      subtitle="A quick operational view of inventory, orders, transport, and harvest readiness.">
       {!farmerProfile.onboardingComplete ? (
-        <SectionCard>
+        <SectionCard style={styles.alertCard}>
           <Text style={styles.alertTitle}>Onboarding incomplete</Text>
           <Text style={styles.alertText}>
-            Finish your profile and harvest plan in the Profile tab to start matching buyers faster.
+            Complete your profile and harvest plan in the Profile tab to improve buyer matching.
           </Text>
         </SectionCard>
       ) : null}
 
-      <View style={styles.metricGrid}>
-        <SectionCard style={styles.metricCard}>
-          <Text style={styles.metricLabel}>Inventory (kg)</Text>
-          <Text style={styles.metricValue}>{totalInventory.toFixed(0)}</Text>
-        </SectionCard>
-
-        <SectionCard style={styles.metricCard}>
-          <Text style={styles.metricLabel}>Projected value</Text>
-          <Text style={styles.metricValue}>{fmtCurrency(projectedRevenue)}</Text>
-        </SectionCard>
-
-        <SectionCard style={styles.metricCard}>
-          <Text style={styles.metricLabel}>Active orders</Text>
-          <Text style={styles.metricValue}>{activeOrders}</Text>
-        </SectionCard>
-
-        <SectionCard style={styles.metricCard}>
-          <Text style={styles.metricLabel}>Awaiting transport</Text>
-          <Text style={styles.metricValue}>{pendingTransport}</Text>
-        </SectionCard>
-      </View>
+      <SectionCard>
+        <Text style={styles.sectionTitle}>Key metrics</Text>
+        <View style={styles.metricGrid}>
+          <View style={styles.metricTile}>
+            <Text style={styles.metricLabel}>Inventory (kg)</Text>
+            <Text style={styles.metricValue}>{totalInventory.toFixed(0)}</Text>
+          </View>
+          <View style={styles.metricTile}>
+            <Text style={styles.metricLabel}>Projected value</Text>
+            <Text style={styles.metricValue}>{fmtCurrency(projectedRevenue)}</Text>
+          </View>
+          <View style={styles.metricTile}>
+            <Text style={styles.metricLabel}>Active orders</Text>
+            <Text style={styles.metricValue}>{activeOrders}</Text>
+          </View>
+          <View style={styles.metricTile}>
+            <Text style={styles.metricLabel}>Awaiting transport</Text>
+            <Text style={styles.metricValue}>{pendingTransport}</Text>
+          </View>
+        </View>
+      </SectionCard>
 
       <SectionCard>
-        <Text style={styles.sectionTitle}>Order fulfillment</Text>
+        <Text style={styles.sectionTitle}>Current operations</Text>
         <View style={styles.rowSpread}>
           <Text style={styles.rowLabel}>Delivered orders</Text>
           <Text style={styles.rowValue}>{deliveredOrders}</Text>
         </View>
         <View style={styles.rowSpread}>
-          <Text style={styles.rowLabel}>Orders with transport</Text>
+          <Text style={styles.rowLabel}>Orders with transport assigned</Text>
           <Text style={styles.rowValue}>{transportRequests.length}</Text>
         </View>
       </SectionCard>
 
       <SectionCard>
-        <Text style={styles.sectionTitle}>Current listings</Text>
+        <Text style={styles.sectionTitle}>Listings snapshot</Text>
         {listings.length ? (
-          listings.slice(0, 4).map((listing) => (
+          listings.slice(0, 3).map((listing) => (
             <View key={listing.id} style={styles.listItem}>
               <View style={styles.rowSpread}>
                 <Text style={styles.listTitle}>{listing.cropName}</Text>
@@ -90,14 +91,14 @@ export default function DashboardScreen() {
             </View>
           ))
         ) : (
-          <Text style={styles.emptyText}>No crop listings yet. Add your first listing from the Listings tab.</Text>
+          <Text style={styles.emptyText}>No crop listings yet.</Text>
         )}
       </SectionCard>
 
       <SectionCard>
-        <Text style={styles.sectionTitle}>Harvest plan</Text>
+        <Text style={styles.sectionTitle}>Harvest timeline</Text>
         {farmerProfile.harvestPlans.length ? (
-          farmerProfile.harvestPlans.map((plan) => (
+          farmerProfile.harvestPlans.slice(0, 4).map((plan) => (
             <View key={plan.id} style={styles.rowSpread}>
               <Text style={styles.rowLabel}>
                 {plan.cropName} ({plan.quantityKg} kg)
@@ -110,7 +111,7 @@ export default function DashboardScreen() {
         )}
 
         <ActionButton
-          label="Manage harvest plan in Profile"
+          label="Manage harvest plan"
           onPress={() => router.push('/profile')}
           variant="secondary"
         />
@@ -120,28 +121,50 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: ui.heading,
+  },
+  alertCard: {
+    backgroundColor: '#fff7ee',
+    borderColor: '#f1dfc9',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  alertTitle: {
+    color: '#8b5e23',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  alertText: {
+    color: '#806448',
+    fontSize: 12,
+    lineHeight: 18,
+  },
   metricGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
   },
-  metricCard: {
+  metricTile: {
     width: '48%',
+    backgroundColor: ui.surfaceMuted,
+    borderWidth: 1,
+    borderColor: ui.border,
+    borderRadius: 12,
+    padding: 10,
+    gap: 4,
   },
   metricLabel: {
-    fontSize: 12,
-    color: '#5c725f',
+    fontSize: 11,
+    color: ui.textMuted,
     fontWeight: '600',
   },
   metricValue: {
-    fontSize: 24,
-    color: '#193423',
-    fontWeight: '800',
-  },
-  sectionTitle: {
-    fontSize: 16,
+    fontSize: 20,
+    color: ui.heading,
     fontWeight: '700',
-    color: '#183121',
   },
   rowSpread: {
     flexDirection: 'row',
@@ -150,42 +173,33 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   rowLabel: {
-    color: '#365240',
+    color: ui.textMuted,
     fontSize: 13,
     flex: 1,
   },
   rowValue: {
-    color: '#193423',
+    color: ui.heading,
     fontSize: 13,
     fontWeight: '700',
   },
   listItem: {
     gap: 4,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#edf2eb',
+    backgroundColor: ui.surfaceMuted,
+    borderRadius: 11,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
   },
   listTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#163323',
+    color: ui.heading,
   },
   listMeta: {
-    fontSize: 13,
-    color: '#5a735e',
+    fontSize: 12,
+    color: ui.textMuted,
   },
   emptyText: {
-    fontSize: 13,
-    color: '#627a68',
-  },
-  alertTitle: {
-    color: '#934500',
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  alertText: {
-    color: '#754c17',
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    color: ui.textMuted,
   },
 });

@@ -1,5 +1,8 @@
 import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { ui } from '@/components/agri/theme';
 
 type ScreenShellProps = {
   title: string;
@@ -8,12 +11,25 @@ type ScreenShellProps = {
 };
 
 export function ScreenShell({ title, subtitle, children }: ScreenShellProps) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{title}</Text>
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingTop: Math.max(insets.top * 0.25, 6),
+            paddingBottom: 110 + insets.bottom,
+          },
+        ]}
+        keyboardShouldPersistTaps="handled">
+        <View style={styles.hero}>
+          <View style={styles.header}>
+            <Text style={styles.title}>{title}</Text>
+            {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+          </View>
         </View>
         {children}
       </ScrollView>
@@ -24,25 +40,30 @@ export function ScreenShell({ title, subtitle, children }: ScreenShellProps) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f5f8f0',
+    backgroundColor: ui.bg,
   },
   content: {
     paddingHorizontal: 16,
-    paddingBottom: 32,
-    gap: 14,
+    gap: 12,
+  },
+  hero: {
+    paddingTop: 4,
+    paddingBottom: 4,
   },
   header: {
-    paddingTop: 16,
-    gap: 6,
+    paddingTop: 8,
+    gap: 8,
   },
   title: {
-    fontSize: 28,
+    fontSize: 29,
     fontWeight: '700',
-    color: '#1e3a23',
+    color: ui.heading,
+    letterSpacing: -0.4,
   },
   subtitle: {
-    fontSize: 15,
-    color: '#48614f',
-    lineHeight: 20,
+    fontSize: 14,
+    color: ui.textMuted,
+    lineHeight: 19,
+    maxWidth: 620,
   },
 });
