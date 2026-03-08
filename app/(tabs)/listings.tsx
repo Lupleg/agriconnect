@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ScreenShell } from '@/components/agri/screen-shell';
+import { ui } from '@/components/agri/theme';
 import { ActionButton, Field, ListingStatusPill, SectionCard } from '@/components/agri/ui';
 import { useAgri } from '@/context/agri-context';
 import type { ListingStatus } from '@/types/agri';
@@ -51,26 +52,32 @@ export default function ListingsScreen() {
   return (
     <ScreenShell
       title="Crop Listings"
-      subtitle="Create produce listings with quantity, pricing, harvest details, and selling status.">
+      subtitle="Publish available crops and keep stock status updated for buyers.">
       <SectionCard>
         <Text style={styles.sectionTitle}>Post new crop</Text>
-        <Field label="Crop name" value={cropName} onChangeText={setCropName} placeholder="e.g. Tomatoes" />
+        <Field label="Crop name" value={cropName} onChangeText={setCropName} placeholder="Tomatoes" />
+        <View style={styles.splitRow}>
+          <View style={styles.splitCol}>
+            <Field
+              label="Quantity (kg)"
+              value={quantityKg}
+              onChangeText={setQuantityKg}
+              keyboardType="numeric"
+              placeholder="850"
+            />
+          </View>
+          <View style={styles.splitCol}>
+            <Field
+              label="Price/kg (USD)"
+              value={pricePerKg}
+              onChangeText={setPricePerKg}
+              keyboardType="numeric"
+              placeholder="1.25"
+            />
+          </View>
+        </View>
         <Field
-          label="Available quantity (kg)"
-          value={quantityKg}
-          onChangeText={setQuantityKg}
-          keyboardType="numeric"
-          placeholder="e.g. 850"
-        />
-        <Field
-          label="Price per kg (USD)"
-          value={pricePerKg}
-          onChangeText={setPricePerKg}
-          keyboardType="numeric"
-          placeholder="e.g. 1.25"
-        />
-        <Field
-          label="Harvest date (YYYY-MM-DD)"
+          label="Harvest date"
           value={harvestDate}
           onChangeText={setHarvestDate}
           placeholder="2026-03-25"
@@ -82,7 +89,6 @@ export default function ListingsScreen() {
           placeholder="https://..."
           autoCapitalize="none"
         />
-
         <ActionButton label="Create listing" onPress={addListing} />
       </SectionCard>
 
@@ -100,9 +106,8 @@ export default function ListingsScreen() {
               </View>
 
               <Text style={styles.metaText}>
-                {listing.quantityKg.toFixed(0)} kg | ${listing.pricePerKg.toFixed(2)}/kg
+                {listing.quantityKg.toFixed(0)} kg | ${listing.pricePerKg.toFixed(2)}/kg | {listing.harvestDate}
               </Text>
-              <Text style={styles.metaText}>Harvest: {listing.harvestDate}</Text>
 
               <View style={styles.statusRow}>
                 {listingStatuses.map((status) => (
@@ -133,19 +138,28 @@ export default function ListingsScreen() {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#183121',
+    color: ui.heading,
+  },
+  splitRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  splitCol: {
+    flex: 1,
   },
   emptyText: {
-    fontSize: 13,
-    color: '#6a7f6d',
+    fontSize: 12,
+    color: ui.textMuted,
   },
   listingItem: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#e7eee3',
-    paddingBottom: 10,
-    gap: 4,
+    backgroundColor: ui.surfaceMuted,
+    borderWidth: 1,
+    borderColor: ui.border,
+    borderRadius: 12,
+    padding: 10,
+    gap: 6,
   },
   rowSpread: {
     flexDirection: 'row',
@@ -154,35 +168,35 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   listingTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
-    color: '#1b3724',
+    color: ui.heading,
   },
   metaText: {
-    fontSize: 13,
-    color: '#5c725f',
+    fontSize: 12,
+    color: ui.textMuted,
   },
   statusRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 6,
+    gap: 7,
+    marginTop: 2,
   },
   statusButton: {
-    backgroundColor: '#edf3ec',
+    backgroundColor: '#f0f5ef',
     borderWidth: 1,
-    borderColor: '#d3ded1',
+    borderColor: '#d8e3d6',
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: 999,
   },
   statusButtonActive: {
-    backgroundColor: '#1b7a3c',
-    borderColor: '#1b7a3c',
+    backgroundColor: ui.primary,
+    borderColor: ui.primary,
   },
   statusButtonText: {
-    fontSize: 12,
-    color: '#436148',
+    fontSize: 11,
+    color: '#4b6352',
     fontWeight: '700',
     textTransform: 'capitalize',
   },

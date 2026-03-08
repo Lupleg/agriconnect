@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { GpsRouteMap } from '@/components/agri/gps-route-map';
 import { ScreenShell } from '@/components/agri/screen-shell';
+import { ui } from '@/components/agri/theme';
 import { ActionButton, Field, OrderStatusPill, SectionCard } from '@/components/agri/ui';
 import { useAgri } from '@/context/agri-context';
 
@@ -49,10 +50,10 @@ export default function LogisticsScreen() {
 
   return (
     <ScreenShell
-      title="Transport & Tracking"
-      subtitle="Assign drivers, set delivery fee, and monitor GPS checkpoints by order status.">
+      title="Logistics"
+      subtitle="Assign transport, move delivery status, and monitor route checkpoints.">
       <SectionCard>
-        <Text style={styles.sectionTitle}>Choose order</Text>
+        <Text style={styles.sectionTitle}>Select order</Text>
 
         <View style={styles.optionWrap}>
           {orders.map((order) => (
@@ -90,7 +91,6 @@ export default function LogisticsScreen() {
               <Text style={styles.summaryLabel}>Status</Text>
               <OrderStatusPill status={selectedOrder.status} />
             </View>
-
             <ActionButton
               label="Advance order status"
               onPress={() => advanceOrderStatus(selectedOrder.id)}
@@ -101,42 +101,48 @@ export default function LogisticsScreen() {
       </SectionCard>
 
       <SectionCard>
-        <Text style={styles.sectionTitle}>Transport coordination</Text>
+        <Text style={styles.sectionTitle}>Transport request</Text>
         <Field
           label="Driver name"
           value={driverName}
           onChangeText={setDriverName}
-          placeholder="e.g. Peter Njoroge"
+          placeholder="Peter Njoroge"
         />
-        <Field
-          label="Vehicle plate"
-          value={vehiclePlate}
-          onChangeText={setVehiclePlate}
-          placeholder="KDA 314X"
-          autoCapitalize="characters"
-        />
+        <View style={styles.splitRow}>
+          <View style={styles.splitCol}>
+            <Field
+              label="Vehicle plate"
+              value={vehiclePlate}
+              onChangeText={setVehiclePlate}
+              placeholder="KDA 314X"
+              autoCapitalize="characters"
+            />
+          </View>
+          <View style={styles.splitCol}>
+            <Field
+              label="Delivery fee (USD)"
+              value={deliveryFee}
+              onChangeText={setDeliveryFee}
+              keyboardType="numeric"
+              placeholder="40"
+            />
+          </View>
+        </View>
         <Field
           label="Pickup details"
           value={pickupDetails}
           onChangeText={setPickupDetails}
-          placeholder="Farm gate, loading zone"
+          placeholder="Farm gate"
         />
         <Field
           label="Dropoff details"
           value={dropoffDetails}
           onChangeText={setDropoffDetails}
-          placeholder="Warehouse, receiving dock"
-        />
-        <Field
-          label="Delivery fee (USD)"
-          value={deliveryFee}
-          onChangeText={setDeliveryFee}
-          keyboardType="numeric"
-          placeholder="40"
+          placeholder="Warehouse"
         />
 
         <ActionButton
-          label={selectedTransport ? 'Update transport request' : 'Create transport request'}
+          label={selectedTransport ? 'Update transport' : 'Create transport'}
           onPress={() => {
             if (!selectedOrder) return;
 
@@ -154,7 +160,7 @@ export default function LogisticsScreen() {
       </SectionCard>
 
       <SectionCard>
-        <Text style={styles.sectionTitle}>GPS map tracking</Text>
+        <Text style={styles.sectionTitle}>GPS tracking</Text>
         {selectedTransport ? (
           <>
             <View style={styles.summaryRow}>
@@ -182,9 +188,16 @@ export default function LogisticsScreen() {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#183121',
+    color: ui.heading,
+  },
+  splitRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  splitCol: {
+    flex: 1,
   },
   optionWrap: {
     flexDirection: 'row',
@@ -194,19 +207,19 @@ const styles = StyleSheet.create({
   orderPill: {
     borderRadius: 999,
     paddingHorizontal: 10,
-    paddingVertical: 7,
+    paddingVertical: 6,
     borderWidth: 1,
-    borderColor: '#d5dfd2',
-    backgroundColor: '#eef4eb',
+    borderColor: '#d8e3d7',
+    backgroundColor: '#edf3ec',
   },
   orderPillActive: {
-    backgroundColor: '#257b46',
-    borderColor: '#257b46',
+    backgroundColor: ui.primary,
+    borderColor: ui.primary,
   },
   orderPillText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
-    color: '#415c48',
+    color: '#495f4f',
   },
   orderPillTextActive: {
     color: '#ffffff',
@@ -221,19 +234,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   summaryLabel: {
-    fontSize: 13,
-    color: '#607666',
+    fontSize: 12,
+    color: ui.textMuted,
     flex: 1,
   },
   summaryValue: {
-    fontSize: 13,
-    color: '#203b2a',
+    fontSize: 12,
+    color: ui.heading,
     fontWeight: '700',
     flex: 1,
     textAlign: 'right',
   },
   emptyText: {
-    fontSize: 13,
-    color: '#607666',
+    fontSize: 12,
+    color: ui.textMuted,
   },
 });

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ScreenShell } from '@/components/agri/screen-shell';
+import { ui } from '@/components/agri/theme';
 import { ActionButton, Field, OrderStatusPill, SectionCard } from '@/components/agri/ui';
 import { useAgri } from '@/context/agri-context';
 import type { MessageSender } from '@/types/agri';
@@ -83,10 +84,10 @@ export default function OrdersScreen() {
 
   return (
     <ScreenShell
-      title="Orders & Negotiation"
-      subtitle="Buyers place orders directly from listings and negotiate terms in per-order chat.">
+      title="Orders"
+      subtitle="Create buyer orders, move status forward, and negotiate by order thread.">
       <SectionCard>
-        <Text style={styles.sectionTitle}>Create buyer order</Text>
+        <Text style={styles.sectionTitle}>New order</Text>
 
         <Text style={styles.fieldLabel}>Select listing</Text>
         <View style={styles.optionRow}>
@@ -116,21 +117,27 @@ export default function OrdersScreen() {
           onChangeText={setBuyerContact}
           placeholder="+254 ..."
         />
+        <View style={styles.splitRow}>
+          <View style={styles.splitCol}>
+            <Field
+              label="Quantity (kg)"
+              value={quantityKg}
+              onChangeText={setQuantityKg}
+              keyboardType="numeric"
+              placeholder="100"
+            />
+          </View>
+          <View style={styles.splitCol}>
+            <Field
+              label="Pickup"
+              value={pickupLocation}
+              onChangeText={setPickupLocation}
+              placeholder="Farm location"
+            />
+          </View>
+        </View>
         <Field
-          label="Order quantity (kg)"
-          value={quantityKg}
-          onChangeText={setQuantityKg}
-          keyboardType="numeric"
-          placeholder="100"
-        />
-        <Field
-          label="Pickup location"
-          value={pickupLocation}
-          onChangeText={setPickupLocation}
-          placeholder="Farm location"
-        />
-        <Field
-          label="Dropoff location"
+          label="Dropoff"
           value={dropoffLocation}
           onChangeText={setDropoffLocation}
           placeholder="Buyer location"
@@ -151,23 +158,27 @@ export default function OrdersScreen() {
             ]}>
             <View style={styles.rowSpread}>
               <Text style={styles.orderTitle}>
-                {order.cropName} - {order.quantityKg} kg
+                {order.cropName} · {order.quantityKg} kg
               </Text>
               <OrderStatusPill status={order.status} />
             </View>
             <Text style={styles.orderMeta}>Buyer: {order.buyerName}</Text>
             <Text style={styles.orderMeta}>
-              Pickup: {order.pickupLocation} {'->'} {order.dropoffLocation}
+              {order.pickupLocation} {'->'} {order.dropoffLocation}
             </Text>
             <Text style={styles.orderMeta}>Total: ${order.totalPrice.toFixed(2)}</Text>
-            <ActionButton label="Advance status" onPress={() => advanceOrderStatus(order.id)} variant="secondary" />
+            <ActionButton
+              label="Advance status"
+              onPress={() => advanceOrderStatus(order.id)}
+              variant="secondary"
+            />
           </Pressable>
         ))}
       </SectionCard>
 
       <SectionCard>
         <Text style={styles.sectionTitle}>Negotiation chat</Text>
-        <Text style={styles.caption}>Select an order above to open conversation.</Text>
+        <Text style={styles.caption}>Select an order above to open its chat thread.</Text>
 
         <Text style={styles.fieldLabel}>Sender</Text>
         <View style={styles.optionRow}>
@@ -194,7 +205,7 @@ export default function OrdersScreen() {
           label="Message"
           value={chatBody}
           onChangeText={setChatBody}
-          placeholder="Type delivery timing, quality checks, or price updates"
+          placeholder="Delivery timing, quality checks, or quantity changes"
           multiline
           numberOfLines={3}
           style={styles.chatInput}
@@ -218,7 +229,7 @@ export default function OrdersScreen() {
             </View>
           ))
         ) : (
-          <Text style={styles.caption}>No messages for this order yet.</Text>
+          <Text style={styles.caption}>No messages yet.</Text>
         )}
       </SectionCard>
     </ScreenShell>
@@ -227,18 +238,25 @@ export default function OrdersScreen() {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#183121',
+    color: ui.heading,
   },
   caption: {
-    fontSize: 13,
-    color: '#607565',
+    fontSize: 12,
+    color: ui.textMuted,
   },
   fieldLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#2f4636',
+    color: ui.textMuted,
+  },
+  splitRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  splitCol: {
+    flex: 1,
   },
   optionRow: {
     flexDirection: 'row',
@@ -246,35 +264,36 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   optionPill: {
-    backgroundColor: '#edf4eb',
+    backgroundColor: '#eef3ed',
     borderWidth: 1,
-    borderColor: '#d4dfd0',
+    borderColor: '#d8e2d5',
     borderRadius: 999,
     paddingHorizontal: 10,
-    paddingVertical: 7,
+    paddingVertical: 5,
   },
   optionPillActive: {
-    backgroundColor: '#1f7d3f',
-    borderColor: '#1f7d3f',
+    backgroundColor: ui.primary,
+    borderColor: ui.primary,
   },
   optionPillText: {
-    color: '#3f5945',
-    fontSize: 12,
+    color: '#4a6151',
+    fontSize: 11,
     fontWeight: '700',
   },
   optionPillTextActive: {
     color: '#ffffff',
   },
   orderItem: {
-    gap: 4,
+    gap: 5,
     borderWidth: 1,
-    borderColor: '#e1ebdc',
-    borderRadius: 10,
+    borderColor: ui.border,
+    borderRadius: 12,
     padding: 10,
+    backgroundColor: ui.surfaceMuted,
   },
   orderItemSelected: {
-    borderColor: '#257b46',
-    backgroundColor: '#f4faf2',
+    borderColor: '#cbdacb',
+    backgroundColor: '#edf5ee',
   },
   rowSpread: {
     flexDirection: 'row',
@@ -283,35 +302,35 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   orderTitle: {
-    color: '#1a3623',
-    fontSize: 14,
+    color: ui.heading,
+    fontSize: 13,
     fontWeight: '700',
   },
   orderMeta: {
-    color: '#59705e',
+    color: ui.textMuted,
     fontSize: 12,
   },
   chatInput: {
-    minHeight: 78,
+    minHeight: 74,
     textAlignVertical: 'top',
   },
   messageItem: {
-    backgroundColor: '#f5f9f4',
+    backgroundColor: ui.surfaceMuted,
     borderWidth: 1,
-    borderColor: '#dfe9db',
-    borderRadius: 10,
+    borderColor: ui.border,
+    borderRadius: 11,
     padding: 10,
-    gap: 4,
+    gap: 3,
   },
   messageSender: {
-    fontSize: 12,
-    color: '#1e6938',
+    fontSize: 11,
+    color: ui.primary,
     fontWeight: '700',
     textTransform: 'capitalize',
   },
   messageBody: {
-    fontSize: 13,
-    color: '#34503b',
-    lineHeight: 18,
+    fontSize: 12,
+    color: '#38513f',
+    lineHeight: 17,
   },
 });
