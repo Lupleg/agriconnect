@@ -239,7 +239,7 @@ export default function LogisticsScreen() {
 
         {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
         {!isSupported ? (
-          <Text style={styles.helperText}>Install `expo-location` to enable live device tracking.</Text>
+          <Text style={styles.helperText}>Enable location services on the device/browser to track live.</Text>
         ) : null}
 
         <ActionButton
