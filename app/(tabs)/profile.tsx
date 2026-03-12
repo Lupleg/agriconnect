@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ScreenShell } from '@/components/agri/screen-shell';
 import { ui } from '@/components/agri/theme';
 import { ActionButton, Field, SectionCard } from '@/components/agri/ui';
+import { ZAMBIA_MAJOR_FARMING_AREAS } from '@/constants/zambia';
 import { useAgri } from '@/context/agri-context';
 
 export default function ProfileScreen() {
@@ -17,9 +18,22 @@ export default function ProfileScreen() {
   const [farmLocation, setFarmLocation] = useState(farmerProfile.farmLocation);
   const [cropTypesRaw, setCropTypesRaw] = useState(farmerProfile.cropTypes.join(', '));
 
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [locationQuery, setLocationQuery] = useState('');
+
   const [harvestCropName, setHarvestCropName] = useState('');
   const [harvestDate, setHarvestDate] = useState('2026-03-20');
   const [harvestQuantity, setHarvestQuantity] = useState('');
+
+  const locationOptions = useMemo(() => {
+    const query = locationQuery.trim().toLowerCase();
+    if (!query) return ZAMBIA_MAJOR_FARMING_AREAS;
+
+    return ZAMBIA_MAJOR_FARMING_AREAS.filter((option) => {
+      const haystack = `${option.district} ${option.province} ${option.value}`.toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [locationQuery]);
 
   return (
     <ScreenShell
@@ -65,14 +79,27 @@ export default function ProfileScreen() {
               label="Phone number"
               value={phoneNumber}
               onChangeText={setPhoneNumber}
-              placeholder="+254 ..."
+              placeholder="+260 ..."
             />
             <Field
               label="Farm location"
               value={farmLocation}
               onChangeText={setFarmLocation}
-              placeholder="Village / district"
+              placeholder="e.g., Mkushi, Central Province"
             />
+            <View style={styles.locationActions}>
+              <Pressable
+                style={styles.locationPickButton}
+                onPress={() => {
+                  setLocationQuery('');
+                  setShowLocationPicker(true);
+                }}>
+                <Text style={styles.locationPickText}>Pick a major farming area (Zambia)</Text>
+              </Pressable>
+              <Text style={styles.caption}>
+                Suggestions include Mkushi, Chipata, Mazabuka, Mpongwe, Chongwe, and more.
+              </Text>
+            </View>
             <Field
               label="Crop types (comma-separated)"
               value={cropTypesRaw}
@@ -104,6 +131,45 @@ export default function ProfileScreen() {
           <Text style={styles.helperText}>Open Edit when profile changes are needed.</Text>
         )}
       </SectionCard>
+
+      <Modal visible={showLocationPicker} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select farming area (Zambia)</Text>
+              <Pressable style={styles.ghostButton} onPress={() => setShowLocationPicker(false)}>
+                <Text style={styles.ghostButtonText}>Close</Text>
+              </Pressable>
+            </View>
+
+            <Field
+              label="Search"
+              value={locationQuery}
+              onChangeText={setLocationQuery}
+              placeholder="Type district or province..."
+            />
+
+            <ScrollView contentContainerStyle={styles.modalList}>
+              {locationOptions.map((option) => (
+                <Pressable
+                  key={option.id}
+                  style={styles.locationRow}
+                  onPress={() => {
+                    setFarmLocation(option.value);
+                    setShowLocationPicker(false);
+                  }}>
+                  <Text style={styles.locationRowTitle}>{option.district}</Text>
+                  <Text style={styles.locationRowMeta}>{option.province}</Text>
+                </Pressable>
+              ))}
+
+              {!locationOptions.length ? (
+                <Text style={styles.helperText}>No matches. You can still type a custom location.</Text>
+              ) : null}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       <SectionCard>
         <View style={styles.headerRow}>
@@ -252,6 +318,71 @@ const styles = StyleSheet.create({
   caption: {
     fontSize: 12,
     color: ui.textMuted,
+  },
+  locationActions: {
+    gap: 6,
+  },
+  locationPickButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#dce7d8',
+    backgroundColor: '#f1f6ef',
+  },
+  locationPickText: {
+    fontSize: 12,
+    color: '#4e6554',
+    fontWeight: '700',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(10, 15, 12, 0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    backgroundColor: ui.surface,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    padding: 14,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: ui.border,
+    maxHeight: '85%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  modalTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: ui.heading,
+    flex: 1,
+  },
+  modalList: {
+    paddingVertical: 4,
+    gap: 8,
+  },
+  locationRow: {
+    borderWidth: 1,
+    borderColor: ui.border,
+    borderRadius: 14,
+    padding: 12,
+    backgroundColor: ui.surfaceMuted,
+  },
+  locationRowTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: ui.heading,
+  },
+  locationRowMeta: {
+    fontSize: 12,
+    color: ui.textMuted,
+    marginTop: 2,
   },
   splitRow: {
     flexDirection: 'row',

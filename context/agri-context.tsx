@@ -77,14 +77,14 @@ const sampleOrders: BuyerOrder[] = [
     id: 'order-1',
     listingId: 'crop-maize-1',
     cropName: 'Maize',
-    buyerName: 'Green Market Co-op',
-    buyerContact: '+254 700 111 222',
+    buyerName: 'Lusaka Fresh Produce Hub',
+    buyerContact: '+260 97 000 1111',
     quantityKg: 200,
     unitPrice: 0.6,
     totalPrice: 120,
     status: 'pending',
-    pickupLocation: 'Kiminini Farm Gate',
-    dropoffLocation: 'Kitale Market Depot',
+    pickupLocation: 'Mkushi Farm Gate',
+    dropoffLocation: 'Lusaka Market Depot',
     createdAt: nowDate(),
   },
 ];
@@ -113,8 +113,9 @@ const hash = (value: string) =>
 
 const buildRouteCheckpoints = (pickup: string, dropoff: string): GpsCheckpoint[] => {
   const seed = hash(`${pickup}-${dropoff}`);
-  const latBase = -1.28 + (seed % 15) / 100;
-  const lngBase = 36.8 + (seed % 20) / 100;
+  // Zambia-centered demo coordinates (roughly around Lusaka/Central) so maps render locally.
+  const latBase = -15.4 + (seed % 18) / 100;
+  const lngBase = 28.3 + (seed % 22) / 100;
 
   return [
     {

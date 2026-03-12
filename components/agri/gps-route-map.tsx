@@ -1,8 +1,10 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { ui } from '@/components/agri/theme';
 import type { GpsCheckpoint } from '@/types/agri';
+
+type LatLng = { latitude: number; longitude: number };
 
 type LiveLocation = {
   latitude: number;
@@ -16,12 +18,67 @@ type RouteMapProps = {
   liveLocation?: LiveLocation | null;
 };
 
-type Point = GpsCheckpoint & {
-  x: number;
-  y: number;
+type MapsModule = {
+  MapView: any;
+  Marker: any;
+  Polyline: any;
+  Circle: any;
 };
 
-export function GpsRouteMap({ checkpoints, currentCheckpointIndex, liveLocation }: RouteMapProps) {
+const getMapsModule = (): MapsModule | null => {
+  if (Platform.OS === 'web') return null;
+
+  // Avoid importing native modules on web.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const maps = require('react-native-maps');
+
+  return {
+    MapView: maps.default,
+    Marker: maps.Marker,
+    Polyline: maps.Polyline,
+    Circle: maps.Circle,
+  };
+};
+
+const toLatLng = (point: LatLng) => ({ latitude: point.latitude, longitude: point.longitude });
+
+const regionFromCoordinates = (points: LatLng[]) => {
+  if (!points.length) {
+    return {
+      latitude: 0,
+      longitude: 0,
+      latitudeDelta: 0.2,
+      longitudeDelta: 0.2,
+    };
+  }
+
+  const latitudes = points.map((p) => p.latitude);
+  const longitudes = points.map((p) => p.longitude);
+
+  const minLat = Math.min(...latitudes);
+  const maxLat = Math.max(...latitudes);
+  const minLng = Math.min(...longitudes);
+  const maxLng = Math.max(...longitudes);
+
+  const latitude = (minLat + maxLat) / 2;
+  const longitude = (minLng + maxLng) / 2;
+
+  const latitudeDelta = Math.max((maxLat - minLat) * 1.6, 0.02);
+  const longitudeDelta = Math.max((maxLng - minLng) * 1.6, 0.02);
+
+  return { latitude, longitude, latitudeDelta, longitudeDelta };
+};
+
+const PlaceholderMap = ({
+  checkpoints,
+  currentCheckpointIndex,
+  liveLocation,
+}: RouteMapProps) => {
+  type Point = GpsCheckpoint & {
+    x: number;
+    y: number;
+  };
+
   const fallbackPoints = useMemo<Point[]>(() => {
     if (!checkpoints.length) return [];
 
@@ -73,44 +130,148 @@ export function GpsRouteMap({ checkpoints, currentCheckpointIndex, liveLocation 
   }
 
   return (
-    <View style={styles.wrap}>
-      <View style={styles.map}>
-        <View style={styles.gridHorizontalTop} />
-        <View style={styles.gridHorizontalBottom} />
-        <View style={styles.gridVerticalLeft} />
-        <View style={styles.gridVerticalRight} />
+    <View style={styles.mapContainer}>
+      <View style={styles.gridHorizontalTop} />
+      <View style={styles.gridHorizontalBottom} />
+      <View style={styles.gridVerticalLeft} />
+      <View style={styles.gridVerticalRight} />
 
-        {fallbackPoints.map((point, index) => {
-          const reached = index <= currentCheckpointIndex;
-          const current = index === currentCheckpointIndex;
+      {fallbackPoints.map((point, index) => {
+        const reached = index <= currentCheckpointIndex;
+        const current = index === currentCheckpointIndex;
 
-          return (
-            <View
-              key={point.id}
-              style={[
-                styles.point,
-                {
-                  left: `${point.x}%`,
-                  top: `${point.y}%`,
-                  backgroundColor: reached ? ui.primary : '#cbd7ce',
-                  borderColor: current ? '#d89b3f' : '#ffffff',
-                },
-              ]}
-            />
-          );
-        })}
-
-        {livePoint ? (
+        return (
           <View
+            key={point.id}
             style={[
-              styles.livePoint,
+              styles.point,
               {
-                left: `${livePoint.x}%`,
-                top: `${livePoint.y}%`,
+                left: `${point.x}%`,
+                top: `${point.y}%`,
+                backgroundColor: reached ? ui.primary : '#cbd7ce',
+                borderColor: current ? '#d89b3f' : '#ffffff',
               },
             ]}
           />
-        ) : null}
+        );
+      })}
+
+      {livePoint ? (
+        <View
+          style={[
+            styles.livePoint,
+            {
+              left: `${livePoint.x}%`,
+              top: `${livePoint.y}%`,
+            },
+          ]}
+        />
+      ) : null}
+    </View>
+  );
+};
+
+export function GpsRouteMap({ checkpoints, currentCheckpointIndex, liveLocation }: RouteMapProps) {
+  const maps = useMemo(() => getMapsModule(), []);
+  const mapRef = useRef<any>(null);
+
+  const routeCoordinates = useMemo<LatLng[]>(
+    () => checkpoints.map((point) => ({ latitude: point.latitude, longitude: point.longitude })),
+    [checkpoints],
+  );
+
+  const liveCoordinate = useMemo<LatLng | null>(() => {
+    if (!liveLocation) return null;
+    return { latitude: liveLocation.latitude, longitude: liveLocation.longitude };
+  }, [liveLocation]);
+
+  const visibleCoordinates = useMemo<LatLng[]>(() => {
+    if (!routeCoordinates.length) return liveCoordinate ? [liveCoordinate] : [];
+    if (!liveCoordinate) return routeCoordinates;
+    return [...routeCoordinates, liveCoordinate];
+  }, [liveCoordinate, routeCoordinates]);
+
+  useEffect(() => {
+    if (!maps || !mapRef.current) return;
+    if (!visibleCoordinates.length) return;
+
+    // Fit the route + live marker into view.
+    try {
+      mapRef.current.fitToCoordinates(visibleCoordinates.map(toLatLng), {
+        edgePadding: { top: 36, right: 36, bottom: 36, left: 36 },
+        animated: true,
+      });
+    } catch {
+      // Some runtimes can throw before initial layout; ignore and rely on initialRegion.
+    }
+  }, [maps, visibleCoordinates]);
+
+  return (
+    <View style={styles.wrap}>
+      <View style={styles.mapContainer}>
+        {maps && routeCoordinates.length ? (
+          <maps.MapView
+            ref={mapRef}
+            style={styles.nativeMap}
+            initialRegion={regionFromCoordinates(visibleCoordinates)}
+            rotateEnabled={false}
+            pitchEnabled={false}
+            toolbarEnabled={false}>
+            <maps.Polyline
+              coordinates={routeCoordinates.map(toLatLng)}
+              strokeColor="#a9b8ae"
+              strokeWidth={4}
+            />
+
+            {routeCoordinates.length && currentCheckpointIndex >= 0 ? (
+              <maps.Polyline
+                coordinates={routeCoordinates
+                  .slice(0, Math.min(currentCheckpointIndex + 1, routeCoordinates.length))
+                  .map(toLatLng)}
+                strokeColor={ui.primary}
+                strokeWidth={5}
+              />
+            ) : null}
+
+            {checkpoints.map((point, index) => {
+              const reached = index <= currentCheckpointIndex;
+              const current = index === currentCheckpointIndex;
+
+              return (
+                <maps.Marker
+                  key={point.id}
+                  coordinate={{ latitude: point.latitude, longitude: point.longitude }}
+                  title={point.name}
+                  pinColor={current ? '#d89b3f' : reached ? ui.primary : '#7c8d81'}
+                />
+              );
+            })}
+
+            {liveCoordinate ? (
+              <>
+                {typeof liveLocation?.accuracy === 'number' && liveLocation.accuracy > 0 ? (
+                  <maps.Circle
+                    center={toLatLng(liveCoordinate)}
+                    radius={Math.min(Math.max(liveLocation.accuracy, 8), 120)}
+                    strokeColor="rgba(220, 76, 63, 0.35)"
+                    fillColor="rgba(220, 76, 63, 0.15)"
+                  />
+                ) : null}
+                <maps.Marker
+                  coordinate={toLatLng(liveCoordinate)}
+                  title="Live driver location"
+                  pinColor="#dc4c3f"
+                />
+              </>
+            ) : null}
+          </maps.MapView>
+        ) : (
+          <PlaceholderMap
+            checkpoints={checkpoints}
+            currentCheckpointIndex={currentCheckpointIndex}
+            liveLocation={liveLocation}
+          />
+        )}
       </View>
 
       <View style={styles.legendWrap}>
@@ -145,7 +306,7 @@ const styles = StyleSheet.create({
   wrap: {
     gap: 10,
   },
-  map: {
+  mapContainer: {
     height: 210,
     borderRadius: 14,
     borderWidth: 1,
@@ -153,6 +314,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#eef4ee',
     overflow: 'hidden',
     position: 'relative',
+  },
+  nativeMap: {
+    ...StyleSheet.absoluteFillObject,
   },
   gridHorizontalTop: {
     position: 'absolute',

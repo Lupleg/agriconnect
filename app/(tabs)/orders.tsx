@@ -22,11 +22,11 @@ export default function OrdersScreen() {
   const [showChat, setShowChat] = useState(false);
 
   const [selectedListingId, setSelectedListingId] = useState<string>(orderableListings[0]?.id ?? '');
-  const [buyerName, setBuyerName] = useState('City Traders');
-  const [buyerContact, setBuyerContact] = useState('+254 711 000 111');
+  const [buyerName, setBuyerName] = useState('Lusaka City Traders');
+  const [buyerContact, setBuyerContact] = useState('+260 97 000 2222');
   const [quantityKg, setQuantityKg] = useState('100');
-  const [pickupLocation, setPickupLocation] = useState('Farm pickup point');
-  const [dropoffLocation, setDropoffLocation] = useState('Urban collection center');
+  const [pickupLocation, setPickupLocation] = useState('Farm gate (e.g., Mkushi)');
+  const [dropoffLocation, setDropoffLocation] = useState('Buyer depot (e.g., Lusaka)');
 
   const [selectedOrderId, setSelectedOrderId] = useState<string>(orders[0]?.id ?? '');
   const [chatSender, setChatSender] = useState<MessageSender>('buyer');
@@ -128,7 +128,7 @@ export default function OrdersScreen() {
               label="Buyer contact"
               value={buyerContact}
               onChangeText={setBuyerContact}
-              placeholder="+254 ..."
+              placeholder="+260 ..."
             />
             <Field
               label="Quantity (kg)"

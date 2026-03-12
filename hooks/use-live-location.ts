@@ -1,3 +1,4 @@
+import * as Location from 'expo-location';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export type LiveLocationPoint = {
@@ -11,126 +12,189 @@ export type LiveLocationPoint = {
 
 export type TrackingState = 'idle' | 'requesting' | 'tracking' | 'denied' | 'unsupported' | 'error';
 
-type LocationModule = {
+type WebGeolocation = {
   getCurrentPosition: (
-    success: (position: any) => void,
-    error?: (error: { code?: number; message?: string }) => void,
-    options?: Record<string, unknown>,
+    success: (position: GeolocationPosition) => void,
+    error?: (error: GeolocationPositionError) => void,
+    options?: PositionOptions,
   ) => void;
   watchPosition: (
-    success: (position: any) => void,
-    error?: (error: { code?: number; message?: string }) => void,
-    options?: Record<string, unknown>,
+    success: (position: GeolocationPosition) => void,
+    error?: (error: GeolocationPositionError) => void,
+    options?: PositionOptions,
   ) => number;
   clearWatch: (watchId: number) => void;
 };
 
-const getLocationModule = (): LocationModule | null => {
+const getWebGeolocation = (): WebGeolocation | null => {
   const navigatorMaybe = globalThis.navigator as Navigator | undefined;
-  return (navigatorMaybe?.geolocation as LocationModule | undefined) ?? null;
+  return (navigatorMaybe?.geolocation as WebGeolocation | undefined) ?? null;
 };
 
-const normalizeLocation = (location: any): LiveLocationPoint => ({
+const normalizeExpoLocation = (location: Location.LocationObject): LiveLocationPoint => ({
   latitude: location.coords.latitude,
   longitude: location.coords.longitude,
-  accuracy: typeof location.coords.accuracy === 'number' ? location.coords.accuracy : null,
-  heading: typeof location.coords.heading === 'number' ? location.coords.heading : null,
-  speed: typeof location.coords.speed === 'number' ? location.coords.speed : null,
+  accuracy: location.coords.accuracy ?? null,
+  heading: location.coords.heading ?? null,
+  speed: location.coords.speed ?? null,
   timestamp: typeof location.timestamp === 'number' ? location.timestamp : Date.now(),
 });
 
+const normalizeWebLocation = (location: GeolocationPosition): LiveLocationPoint => ({
+  latitude: location.coords.latitude,
+  longitude: location.coords.longitude,
+  accuracy: location.coords.accuracy ?? null,
+  heading: location.coords.heading ?? null,
+  speed: location.coords.speed ?? null,
+  timestamp: typeof location.timestamp === 'number' ? location.timestamp : Date.now(),
+});
+
+const isWebRuntime = () => typeof document !== 'undefined';
+
 export function useLiveLocation() {
-  const locationModule = useMemo(() => getLocationModule(), []);
-  const watcherRef = useRef<number | null>(null);
+  const webGeolocation = useMemo(() => (isWebRuntime() ? getWebGeolocation() : null), []);
+  const expoSubscriptionRef = useRef<Location.LocationSubscription | null>(null);
+  const webWatcherRef = useRef<number | null>(null);
 
   const [trackingState, setTrackingState] = useState<TrackingState>(
-    locationModule ? 'idle' : 'unsupported',
+    'idle',
   );
   const [location, setLocation] = useState<LiveLocationPoint | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(
-    locationModule ? null : 'Location package not installed.',
-  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const stopTracking = useCallback(() => {
-    if (watcherRef.current !== null && locationModule) {
-      locationModule.clearWatch(watcherRef.current);
-      watcherRef.current = null;
+    if (expoSubscriptionRef.current) {
+      expoSubscriptionRef.current.remove();
+      expoSubscriptionRef.current = null;
     }
 
-    setTrackingState((current) => (current === 'unsupported' ? current : 'idle'));
-  }, [locationModule]);
+    if (webWatcherRef.current !== null && webGeolocation) {
+      webGeolocation.clearWatch(webWatcherRef.current);
+      webWatcherRef.current = null;
+    }
+
+    setTrackingState('idle');
+  }, [webGeolocation]);
 
   const startTracking = useCallback(async () => {
-    if (!locationModule) {
-      setTrackingState('unsupported');
-      setErrorMessage('Geolocation is not available on this device/runtime.');
-      return;
-    }
-
     setTrackingState('requesting');
     setErrorMessage(null);
 
     try {
-      await new Promise<void>((resolve, reject) => {
-        locationModule.getCurrentPosition(
-          (currentPosition) => {
-            setLocation(normalizeLocation(currentPosition));
-            resolve();
-          },
-          (error) => reject(error),
-          { enableHighAccuracy: true, timeout: 12000, maximumAge: 1000 },
-        );
-      });
-
-      if (watcherRef.current !== null) {
-        locationModule.clearWatch(watcherRef.current);
+      // Prefer expo-location on native runtimes and when available on web.
+      const servicesEnabled = await Location.hasServicesEnabledAsync().catch(() => true);
+      if (!servicesEnabled) {
+        setTrackingState('error');
+        setErrorMessage('Location services are disabled. Enable GPS/location services and try again.');
+        return;
       }
 
-      watcherRef.current = locationModule.watchPosition(
-        (nextLocation) => {
-          setLocation(normalizeLocation(nextLocation));
-          setTrackingState('tracking');
-        },
-        (watchError) => {
-          if (watchError?.code === 1) {
-            setTrackingState('denied');
-            setErrorMessage('Location permission denied. Enable it in device settings.');
-            return;
-          }
-
-          setTrackingState('error');
-          setErrorMessage(watchError?.message || 'Unable to keep tracking live location.');
-        },
-        { enableHighAccuracy: true, timeout: 12000, maximumAge: 1000 },
-      );
-
-      setTrackingState('tracking');
-    } catch (error) {
-      if (typeof error === 'object' && error !== null && 'code' in error && error.code === 1) {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== Location.PermissionStatus.GRANTED) {
         setTrackingState('denied');
         setErrorMessage('Location permission denied. Enable it in device settings.');
         return;
       }
 
-      setTrackingState('error');
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to start location tracking.');
+      const current = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      setLocation(normalizeExpoLocation(current));
+
+      if (expoSubscriptionRef.current) {
+        expoSubscriptionRef.current.remove();
+      }
+
+      expoSubscriptionRef.current = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.Balanced,
+          timeInterval: 2500,
+          distanceInterval: 5,
+        },
+        (nextLocation) => {
+          setLocation(normalizeExpoLocation(nextLocation));
+          setTrackingState('tracking');
+        },
+      );
+
+      setTrackingState('tracking');
+    } catch (error) {
+      // Some web environments (or restricted contexts) might still need navigator.geolocation.
+      if (isWebRuntime() && webGeolocation) {
+        try {
+          await new Promise<void>((resolve, reject) => {
+            webGeolocation.getCurrentPosition(
+              (currentPosition) => {
+                setLocation(normalizeWebLocation(currentPosition));
+                resolve();
+              },
+              (webError) => reject(webError),
+              { enableHighAccuracy: true, timeout: 12000, maximumAge: 1000 },
+            );
+          });
+
+          if (webWatcherRef.current !== null) {
+            webGeolocation.clearWatch(webWatcherRef.current);
+          }
+
+          webWatcherRef.current = webGeolocation.watchPosition(
+            (nextLocation) => {
+              setLocation(normalizeWebLocation(nextLocation));
+              setTrackingState('tracking');
+            },
+            (watchError) => {
+              if (watchError?.code === 1) {
+                setTrackingState('denied');
+                setErrorMessage('Location permission denied. Enable it in browser settings.');
+                return;
+              }
+
+              setTrackingState('error');
+              setErrorMessage(watchError?.message || 'Unable to keep tracking live location.');
+            },
+            { enableHighAccuracy: true, timeout: 12000, maximumAge: 1000 },
+          );
+
+          setTrackingState('tracking');
+          return;
+        } catch (webFallbackError) {
+          setTrackingState('error');
+          setErrorMessage(
+            webFallbackError instanceof Error
+              ? webFallbackError.message
+              : 'Unable to start location tracking.',
+          );
+          return;
+        }
+      }
+
+      setTrackingState('unsupported');
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Location tracking is not available in this runtime.',
+      );
     }
-  }, [locationModule]);
+  }, [webGeolocation]);
 
   useEffect(
     () => () => {
-      if (watcherRef.current !== null && locationModule) {
-        locationModule.clearWatch(watcherRef.current);
+      if (expoSubscriptionRef.current) {
+        expoSubscriptionRef.current.remove();
+        expoSubscriptionRef.current = null;
+      }
+
+      if (webWatcherRef.current !== null && webGeolocation) {
+        webGeolocation.clearWatch(webWatcherRef.current);
+        webWatcherRef.current = null;
       }
     },
-    [locationModule],
+    [webGeolocation],
   );
 
   return {
     location,
     trackingState,
     errorMessage,
-    isSupported: Boolean(locationModule),
+    isSupported: trackingState !== 'unsupported',
     startTracking,
     stopTracking,
   };

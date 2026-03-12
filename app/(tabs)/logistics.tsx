@@ -225,7 +225,10 @@ export default function LogisticsScreen() {
             />
           </>
         ) : (
-          <Text style={styles.helperText}>Open Edit when you need to update driver or fees.</Text>
+          <Text style={styles.helperText}>
+            Open Edit when you need to update driver or fees. Example routes: Mkushi {'->'} Lusaka,
+            Chipata {'->'} Lusaka, or Mazabuka {'->'} Lusaka.
+          </Text>
         )}
       </SectionCard>
 
